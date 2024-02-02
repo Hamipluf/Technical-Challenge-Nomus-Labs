@@ -19,7 +19,6 @@ class UserServices {
     if (!user) {
       return { error: true, message: "User not found." };
     }
-
     const passwordMatch = await bcrypt.compare(password, user.password);
 
     if (!passwordMatch) {
@@ -34,6 +33,9 @@ class UserServices {
   }
   async searchUsers(username) {
     const users = await this.userDao.searchUsersByUsername(username);
+    if (users.length < 1) {
+      return { error: true, message: "No Users Found" };
+    }
     return users;
   }
   async followUser(userId, targetUserId) {
@@ -43,6 +45,42 @@ class UserServices {
   async unfollowUser(userId, targetUserId) {
     const unfollow = await this.userDao.unfollowUser(userId, targetUserId);
     return unfollow;
+  }
+  async getFeedPosts(userId) {
+    const feedPosts = await this.userDao.getFeedPosts(userId);
+    return feedPosts;
+  }
+  async createPost(userId, content) {
+    const post = await this.userDao.createPost(userId, content);
+    return post;
+  }
+  async updatePrivacy(userId, isPrivate) {
+    const user = await this.userDao.updatePrivacy(userId, isPrivate);
+    return user;
+  }
+  async getUserPrivacy(userId) {
+    const isPrivate = await this.userDao.getUserPrivacy(userId);
+    return isPrivate;
+  }
+  async addComment(userId, postId, content) {
+    const comment = await this.userDao.addComment(userId, postId, content);
+    return comment;
+  }
+  async getPostComments(postId) {
+    const comments = await this.userDao.getPostComments(postId);
+    return comments;
+  }
+  async likePost(userId, postId) {
+    const like = await this.userDao.likePost(userId, postId);
+    return like;
+  }
+  async unlikePost(userId, postId) {
+    const unlike = await this.userDao.unlikePost(userId, postId);
+    return unlike;
+  }
+  async getPostLikes(postId) {
+    const likes = await this.userDao.getPostLikes(postId);
+    return likes;
   }
 }
 

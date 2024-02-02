@@ -1,0 +1,5 @@
+PG_HOST=""
+PG_USER=""
+PG_DB=""
+PG_PASSWORD=""
+JWT_SECRET=""
