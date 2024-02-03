@@ -46,8 +46,8 @@ class UserServices {
     const unfollow = await this.userDao.unfollowUser(userId, targetUserId);
     return unfollow;
   }
-  async getFeedPosts(userId) {
-    const feedPosts = await this.userDao.getFeedPosts(userId);
+  async getFeedPosts(userId, limit, offset) {
+    const feedPosts = await this.userDao.getFeedPosts(userId, limit, offset);
     return feedPosts;
   }
   async createPost(userId, content) {
@@ -81,6 +81,31 @@ class UserServices {
   async getPostLikes(postId) {
     const likes = await this.userDao.getPostLikes(postId);
     return likes;
+  }
+  async createNotification(userId, senderId, type, postId, commentId) {
+    const notification = await this.userDao.createNotification(
+      userId,
+      senderId,
+      type,
+      postId,
+      commentId
+    );
+    return notification;
+  }
+  async getUnreadNotifications(userId) {
+    const notifications = await this.userDao.getUnreadNotifications(userId);
+    return notifications;
+  }
+  async markNotificationsAsRead(userId) {
+    const notification = await this.userDao.markNotificationsAsRead(userId);
+    return notification;
+  }
+  async updateProfilePicture(userId, profilePictureUrl) {
+    const user = await this.userDao.updateProfilePicture(
+      userId,
+      profilePictureUrl
+    );
+    return user;
   }
 }
 

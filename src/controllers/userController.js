@@ -1,3 +1,10 @@
+const {
+  PutObjectCommand,
+  GetObjectCommand,
+  DeleteObjectCommand,
+} = require("@aws-sdk/client-s3");
+const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
+const clientS3 = require("../DAOs/aws_s3_config.js").module;
 const UserServices = require("../services/userServices.js");
 const customResponses = require("../utils/customResponses.js");
 const userServices = new UserServices();
@@ -137,6 +144,7 @@ class UserController {
   async getFeedPosts(req, res) {
     try {
       const { userId } = req;
+      const { limit, offset } = req.query;
       if (!userId) {
         return res
           .status(404)
@@ -144,13 +152,35 @@ class UserController {
             customResponses.badResponse(404, "Missing fields to be completed")
           );
       }
-      const feedPosts = await userServices.getFeedPosts(userId);
+      //Validate offset and limit to ensure that they are positive numbers.
+      const parsedOffset = parseInt(offset, 10) || 0;
+      const parsedLimit = parseInt(limit, 10) || 10;
+
+      const feedPosts = await userServices.getFeedPosts(
+        userId,
+        parsedLimit,
+        parsedOffset
+      );
+      
+      const totalPages = Math.ceil(totalDocuments / parsedLimit);
+      const hasNextPage = parsedOffset + parsedLimit < totalDocuments;
+      const hasPreviousPage = parsedOffset > 0;
+
+      const response = {
+        pag: Math.floor(parsedOffset / parsedLimit) + 1,
+        hasNextPage,
+        hasPreviousPage,
+        totalPages,
+        posts: feedPosts,
+      };
+
       return feedPosts.length < 1
         ? res
             .status(400)
             .json(customResponses.badResponse(400, "Posts not found"))
-        : res.json(customResponses.responseOk(200, "Posts Found", feedPosts));
+        : res.json(customResponses.responseOk(200, "Posts Found", response));
     } catch (error) {
+      console.log(error)
       res.status(500).json(customResponses.badResponse(500, error.message));
     }
   }
@@ -343,6 +373,171 @@ class UserController {
             );
     } catch (error) {
       res.status(500).json(customResponses.badResponse(500, error.message));
+    }
+  }
+
+  async createNotification(req, res) {
+    const { userId } = req;
+    const { senderId, type, postId, commentId } = req.params;
+    if (!userId || !senderId || !type) {
+      return res
+        .status(404)
+        .json(
+          customResponses.badResponse(404, "Missing fields to be completed")
+        );
+    }
+    try {
+      const notification = await userServices.createNotification(
+        parseInt(userId),
+        parseInt(senderId),
+        type,
+        parseInt(postId),
+        parseInt(commentId)
+      );
+      return notification
+        ? res
+            .status(200)
+            .json(
+              customResponses.responseOk(
+                200,
+                `Notification created`,
+                notification
+              )
+            )
+        : res.json(
+            customResponses.badResponse(204, `Cant create the notification`)
+          );
+    } catch (error) {
+      console.log(error);
+      res.status(500).json(customResponses.badResponse(500, error.message));
+    }
+  }
+
+  async getUnreadNotifications(req, res) {
+    try {
+      const { userId } = req;
+      const notifications = await userServices.getUnreadNotifications(userId);
+      return notifications.length < 1
+        ? res.json(
+            customResponses.badResponse(
+              204,
+              `No have notifications the user ${userId}`
+            )
+          )
+        : res
+            .status(200)
+            .json(
+              customResponses.responseOk(
+                200,
+                `The user ${userId} have ${notifications.length} notifications`,
+                notifications
+              )
+            );
+    } catch (error) {
+      res.status(500).json(customResponses.badResponse(500, error.message));
+    }
+  }
+
+  async markNotificationsAsRead(req, res) {
+    try {
+      const { userId } = req;
+      const notifications = await userServices.markNotificationsAsRead(userId);
+      return (
+        notifications.length &&
+        res
+          .status(200)
+          .json(
+            customResponses.responseOk(
+              200,
+              `The user ${userId} read ${notifications.length} notifications`,
+              notifications
+            )
+          )
+      );
+    } catch (error) {
+      res.status(500).json(customResponses.badResponse(500, error.message));
+    }
+  }
+
+  async getProfilePicture(req, res) {
+    const { userId } = req;
+    const getParams = {
+      Bucket: process.env.S3_BUCKET_NAME,
+      Key: `${userId}/profilePicture.jpg`,
+    };
+
+    try {
+      const command = new GetObjectCommand(getParams);
+      // Get file from S3
+      const response = await clientS3.send(command);
+      const uniqueParam = Date.now().toString(); // Generates a single parameter with the current timestamp
+      const signedUrl = await getSignedUrl(clientS3, command, {
+        expiresIn: 3600,
+        query: { uniqueParam }, // Add unique params to URL
+        forcePathStyle: true,
+      });
+      if (response.$metadata.httpStatusCode === 200) {
+        signedUrl
+          ? res.json(
+              customResponses.responseOk(200, "Profile Picture.", signedUrl)
+            )
+          : res
+              .status(400)
+              .json(
+                customResponses.badResponse(400, "Cant get the profile url")
+              );
+      }
+    } catch (error) {
+      console.error(error);
+      res
+        .status(500)
+        .json(
+          customResponses.badResponse(
+            500,
+            "Error getting the photo url.",
+            error
+          )
+        );
+    }
+  }
+  async uploadProfilePicture(req, res) {
+    const { userId } = req;
+    const file = req.file; // Field of the request
+    if (!file) {
+      return res
+        .status(400)
+        .json({ error: "No se proporcionó ningún archivo." });
+    }
+    const uploadParams = {
+      Bucket: process.env.S3_BUCKET_NAME,
+      Key: `${userId}/profilePicture.jpg`,
+      Body: file.buffer,
+      ContentType: file.mimetype,
+      // Add Content-Disposition to overwrite the existing file
+      ContentDisposition: `attachment; filename=profilePicture.jpg`,
+    };
+    try {
+      const command = new PutObjectCommand(uploadParams);
+      // Upload file to S3
+      const response = await clientS3.send(command);
+      return response.$metadata.httpStatusCode === 200
+        ? res.json(
+            customResponses.responseOk(
+              200,
+              "Photo uploaded",
+              response.$metadata
+            )
+          )
+        : res
+            .status(400)
+            .json(customResponses.badResponse(400, "Cant upload the file"));
+    } catch (error) {
+      console.error(error);
+      res
+        .status(500)
+        .json(
+          customResponses.badResponse(500, "Error uploading photo.", error)
+        );
     }
   }
 }

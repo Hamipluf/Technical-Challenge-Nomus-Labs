@@ -43,16 +43,19 @@ class UserDao {
     );
     return result.rows[0];
   }
-  async getFeedPosts(userId) {
+  async getFeedPosts(userId, limit, offset) {
+    console.log(userId, limit, offset);
     const result = await client.query(
       "SELECT posts.id, posts.content, posts.user_id, posts.created_at, users.username " +
         "FROM posts " +
         "JOIN follows ON posts.user_id = follows.target_user_id " +
         "JOIN users ON posts.user_id = users.id " +
         "WHERE follows.user_id = $1 " +
-        "ORDER BY posts.created_at DESC",
-      [userId]
+        "ORDER BY posts.created_at DESC " +
+        "LIMIT $2 OFFSET $3",
+      [userId, limit, offset]
     );
+    console.log(result);
     return result.rows;
   }
   async updatePrivacy(userId, isPrivate) {
@@ -90,6 +93,31 @@ class UserDao {
     );
     return result.rows[0];
   }
+  async createNotification(userId, senderId, type, postId, commentId) {
+    // Verify if commentId is a number
+    const validCommentId = !isNaN(parseInt(commentId)) ? commentId : null;
+    const result = await client.query(
+      "INSERT INTO notifications(user_id, sender_id, type, post_id, comment_id) VALUES($1, $2, $3, $4, $5) RETURNING *",
+      [userId, senderId, type, postId, validCommentId]
+    );
+    return result.rows[0];
+  }
+
+  async getUnreadNotifications(userId) {
+    const result = await client.query(
+      "SELECT * FROM notifications WHERE user_id = $1 AND is_read = false",
+      [userId]
+    );
+    return result.rows;
+  }
+
+  async markNotificationsAsRead(userId) {
+    const result = await client.query(
+      "UPDATE notifications SET is_read = true WHERE user_id = $1 RETURNING *",
+      [userId]
+    );
+    return result.rows;
+  }
 
   async unlikePost(userId, postId) {
     const result = await client.query(
@@ -105,6 +133,13 @@ class UserDao {
       [postId]
     );
     return result.rows;
+  }
+  async updateProfilePicture(userId, profilePictureUrl) {
+    const result = await client.query(
+      "UPDATE users SET profile_picture_url = $1 WHERE id = $2 RETURNING *",
+      [profilePictureUrl, userId]
+    );
+    return result.rows[0];
   }
 }
 

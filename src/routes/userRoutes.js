@@ -1,6 +1,8 @@
 const express = require("express");
 const UserController = require("../controllers/userController");
 const authMiddleware = require("../middleware/authMiddleware");
+// Multer
+const upload = require("../utils/multerConfig");
 
 const router = express.Router();
 const userController = new UserController();
@@ -35,5 +37,32 @@ router.get(
   "/getPostLikes/:postId",
   authMiddleware,
   userController.getPostLikes
+);
+router.post(
+  "/createNotification/:senderId/:type/:postId/:commentId?",
+  authMiddleware,
+  userController.createNotification
+);
+router.get(
+  "/getUnreadNotifications",
+  authMiddleware,
+  userController.getUnreadNotifications
+);
+router.post(
+  "/markNotificationsAsRead",
+  authMiddleware,
+  userController.markNotificationsAsRead
+);
+
+router.post(
+  "/uploadProfilePicture",
+  authMiddleware,
+  upload.single("profilePicture"),
+  userController.uploadProfilePicture
+);
+router.get(
+  "/getProfilePicture",
+  authMiddleware,
+  userController.getProfilePicture
 );
 module.exports = router;
