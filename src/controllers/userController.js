@@ -1,13 +1,8 @@
-const {
-  PutObjectCommand,
-  GetObjectCommand,
-  DeleteObjectCommand,
-} = require("@aws-sdk/client-s3");
+const { PutObjectCommand, GetObjectCommand } = require("@aws-sdk/client-s3");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
-const clientS3 = require("../DAOs/aws_s3_config.js").module;
-const UserServices = require("../services/userServices.js");
+const clientS3 = require("../persistence/aws_s3_config.js").module;
+const userServices = require("../services/userServices.js");
 const customResponses = require("../utils/customResponses.js");
-const userServices = new UserServices();
 class UserController {
   async registerUser(req, res) {
     try {
@@ -122,69 +117,6 @@ class UserController {
     }
   }
 
-  async createPost(req, res) {
-    try {
-      const { userId } = req;
-      const { content } = req.body;
-      if (!content || !userId) {
-        return res
-          .status(400)
-          .json(
-            customResponses.badResponse(400, "Missing fields to be completed")
-          );
-      }
-      const post = await userServices.createPost(parseInt(userId), content);
-      console.log(post);
-      res.status(201).json(customResponses.responseOk(201, "Posted", post));
-    } catch (error) {
-      res.status(500).json(customResponses.badResponse(500, error.message));
-    }
-  }
-
-  async getFeedPosts(req, res) {
-    try {
-      const { userId } = req;
-      const { limit, offset } = req.query;
-      if (!userId) {
-        return res
-          .status(404)
-          .json(
-            customResponses.badResponse(404, "Missing fields to be completed")
-          );
-      }
-      //Validate offset and limit to ensure that they are positive numbers.
-      const parsedOffset = parseInt(offset, 10) || 0;
-      const parsedLimit = parseInt(limit, 10) || 10;
-
-      const feedPosts = await userServices.getFeedPosts(
-        userId,
-        parsedLimit,
-        parsedOffset
-      );
-      
-      const totalPages = Math.ceil(totalDocuments / parsedLimit);
-      const hasNextPage = parsedOffset + parsedLimit < totalDocuments;
-      const hasPreviousPage = parsedOffset > 0;
-
-      const response = {
-        pag: Math.floor(parsedOffset / parsedLimit) + 1,
-        hasNextPage,
-        hasPreviousPage,
-        totalPages,
-        posts: feedPosts,
-      };
-
-      return feedPosts.length < 1
-        ? res
-            .status(400)
-            .json(customResponses.badResponse(400, "Posts not found"))
-        : res.json(customResponses.responseOk(200, "Posts Found", response));
-    } catch (error) {
-      console.log(error)
-      res.status(500).json(customResponses.badResponse(500, error.message));
-    }
-  }
-
   async updatePrivacy(req, res) {
     try {
       const { userId } = req;
@@ -224,235 +156,6 @@ class UserController {
           `User ${user.username} is ${user.is_private ? "Private" : "Public"}`,
           user
         )
-      );
-    } catch (error) {
-      res.status(500).json(customResponses.badResponse(500, error.message));
-    }
-  }
-
-  async addComment(req, res) {
-    try {
-      const { userId } = req;
-      const { postId } = req.params;
-      const { content } = req.body;
-      if (!content || !postId || !userId) {
-        return res
-          .status(404)
-          .json(
-            customResponses.badResponse(404, "Missing fields to be completed")
-          );
-      }
-      const comment = await userServices.addComment(
-        parseInt(userId),
-        parseInt(postId),
-        content
-      );
-      console.log(comment);
-      res.status(201).json(comment);
-    } catch (error) {
-      res.status(500).json(customResponses.badResponse(500, error.message));
-    }
-  }
-
-  async getPostComments(req, res) {
-    try {
-      const { postId } = req.params;
-      if (!postId) {
-        return res
-          .status(404)
-          .json(
-            customResponses.badResponse(404, "Missing fields to be completed")
-          );
-      }
-      const comments = await userServices.getPostComments(parseInt(postId));
-      return comments.length < 1
-        ? res.json(customResponses.badResponse(204, "Comments not founds"))
-        : res.json(customResponses.responseOk(200, "Comments", comments));
-    } catch (error) {
-      res.status(500).json(customResponses.badResponse(500, error.message));
-    }
-  }
-
-  async likePost(req, res) {
-    const { userId } = req;
-    const { postId } = req.params;
-    if (!postId || !userId) {
-      return res
-        .status(404)
-        .json(
-          customResponses.badResponse(404, "Missing fields to be completed")
-        );
-    }
-    try {
-      const like = await userServices.likePost(
-        parseInt(userId),
-        parseInt(postId)
-      );
-      return like
-        ? res.json(
-            customResponses.responseOk(
-              204,
-              `Post ${like.post_id} was liked`,
-              like
-            )
-          )
-        : res
-            .status(400)
-            .json(
-              customResponses.badResponse(
-                400,
-                `Can not like post ${like.post_id}`
-              )
-            );
-    } catch (error) {
-      res.status(500).json(customResponses.badResponse(500, error.message));
-    }
-  }
-
-  async unlikePost(req, res) {
-    const { userId } = req;
-    const { postId } = req.params;
-    if (!postId || !userId) {
-      return res
-        .status(404)
-        .json(
-          customResponses.badResponse(404, "Missing fields to be completed")
-        );
-    }
-    try {
-      const unlike = await userServices.unlikePost(
-        parseInt(userId),
-        parseInt(postId)
-      );
-      return like
-        ? res
-            .status(204)
-            .json(
-              customResponses.responseOk(
-                204,
-                `Post ${unlike.post_id} was unliked`,
-                like
-              )
-            )
-        : res
-            .status(400)
-            .json(
-              customResponses.badResponse(
-                400,
-                `Can not unlike post ${unlike.post_id}`
-              )
-            );
-    } catch (error) {
-      res.status(500).json(customResponses.badResponse(500, error.message));
-    }
-  }
-
-  async getPostLikes(req, res) {
-    const { postId } = req.params;
-    if (!postId) {
-      return res
-        .status(404)
-        .json(
-          customResponses.badResponse(404, "Missing fields to be completed")
-        );
-    }
-    try {
-      const likes = await userServices.getPostLikes(parseInt(postId));
-      return likes.length < 1
-        ? res.json(
-            customResponses.badResponse(204, `No have like the post ${postId}`)
-          )
-        : res
-            .status(200)
-            .json(
-              customResponses.responseOk(
-                200,
-                `The post ${postId} have ${likes.length} likes`,
-                likes
-              )
-            );
-    } catch (error) {
-      res.status(500).json(customResponses.badResponse(500, error.message));
-    }
-  }
-
-  async createNotification(req, res) {
-    const { userId } = req;
-    const { senderId, type, postId, commentId } = req.params;
-    if (!userId || !senderId || !type) {
-      return res
-        .status(404)
-        .json(
-          customResponses.badResponse(404, "Missing fields to be completed")
-        );
-    }
-    try {
-      const notification = await userServices.createNotification(
-        parseInt(userId),
-        parseInt(senderId),
-        type,
-        parseInt(postId),
-        parseInt(commentId)
-      );
-      return notification
-        ? res
-            .status(200)
-            .json(
-              customResponses.responseOk(
-                200,
-                `Notification created`,
-                notification
-              )
-            )
-        : res.json(
-            customResponses.badResponse(204, `Cant create the notification`)
-          );
-    } catch (error) {
-      console.log(error);
-      res.status(500).json(customResponses.badResponse(500, error.message));
-    }
-  }
-
-  async getUnreadNotifications(req, res) {
-    try {
-      const { userId } = req;
-      const notifications = await userServices.getUnreadNotifications(userId);
-      return notifications.length < 1
-        ? res.json(
-            customResponses.badResponse(
-              204,
-              `No have notifications the user ${userId}`
-            )
-          )
-        : res
-            .status(200)
-            .json(
-              customResponses.responseOk(
-                200,
-                `The user ${userId} have ${notifications.length} notifications`,
-                notifications
-              )
-            );
-    } catch (error) {
-      res.status(500).json(customResponses.badResponse(500, error.message));
-    }
-  }
-
-  async markNotificationsAsRead(req, res) {
-    try {
-      const { userId } = req;
-      const notifications = await userServices.markNotificationsAsRead(userId);
-      return (
-        notifications.length &&
-        res
-          .status(200)
-          .json(
-            customResponses.responseOk(
-              200,
-              `The user ${userId} read ${notifications.length} notifications`,
-              notifications
-            )
-          )
       );
     } catch (error) {
       res.status(500).json(customResponses.badResponse(500, error.message));
@@ -500,13 +203,16 @@ class UserController {
         );
     }
   }
+
   async uploadProfilePicture(req, res) {
     const { userId } = req;
     const file = req.file; // Field of the request
     if (!file) {
       return res
-        .status(400)
-        .json({ error: "No se proporcionó ningún archivo." });
+        .status(404)
+        .json(
+          customResponses.badResponse(404, "Missing fields to be completed")
+        );
     }
     const uploadParams = {
       Bucket: process.env.S3_BUCKET_NAME,
@@ -540,6 +246,12 @@ class UserController {
         );
     }
   }
+  static getInstance() {
+    if (!this.instance) {
+      this.instance = new UserController();
+    }
+    return this.instance;
+  }
 }
 
-module.exports = UserController;
+module.exports = UserController.getInstance();

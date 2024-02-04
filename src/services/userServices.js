@@ -1,11 +1,11 @@
 const dotenv = require("dotenv").config();
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const UserDao = require("../DAOs/userDao.js");
+const userDao = require("../persistence/DAOs/userDao.js");
 
 class UserServices {
   constructor() {
-    this.userDao = new UserDao();
+    this.userDao = userDao;
   }
 
   async registerUser(username, password) {
@@ -46,14 +46,8 @@ class UserServices {
     const unfollow = await this.userDao.unfollowUser(userId, targetUserId);
     return unfollow;
   }
-  async getFeedPosts(userId, limit, offset) {
-    const feedPosts = await this.userDao.getFeedPosts(userId, limit, offset);
-    return feedPosts;
-  }
-  async createPost(userId, content) {
-    const post = await this.userDao.createPost(userId, content);
-    return post;
-  }
+  
+ 
   async updatePrivacy(userId, isPrivate) {
     const user = await this.userDao.updatePrivacy(userId, isPrivate);
     return user;
@@ -62,44 +56,8 @@ class UserServices {
     const isPrivate = await this.userDao.getUserPrivacy(userId);
     return isPrivate;
   }
-  async addComment(userId, postId, content) {
-    const comment = await this.userDao.addComment(userId, postId, content);
-    return comment;
-  }
-  async getPostComments(postId) {
-    const comments = await this.userDao.getPostComments(postId);
-    return comments;
-  }
-  async likePost(userId, postId) {
-    const like = await this.userDao.likePost(userId, postId);
-    return like;
-  }
-  async unlikePost(userId, postId) {
-    const unlike = await this.userDao.unlikePost(userId, postId);
-    return unlike;
-  }
-  async getPostLikes(postId) {
-    const likes = await this.userDao.getPostLikes(postId);
-    return likes;
-  }
-  async createNotification(userId, senderId, type, postId, commentId) {
-    const notification = await this.userDao.createNotification(
-      userId,
-      senderId,
-      type,
-      postId,
-      commentId
-    );
-    return notification;
-  }
-  async getUnreadNotifications(userId) {
-    const notifications = await this.userDao.getUnreadNotifications(userId);
-    return notifications;
-  }
-  async markNotificationsAsRead(userId) {
-    const notification = await this.userDao.markNotificationsAsRead(userId);
-    return notification;
-  }
+ 
+  
   async updateProfilePicture(userId, profilePictureUrl) {
     const user = await this.userDao.updateProfilePicture(
       userId,
@@ -107,6 +65,13 @@ class UserServices {
     );
     return user;
   }
+  
+  static getInstance() {
+    if (!this.instance) {
+      this.instance = new UserServices();
+    }
+    return this.instance;
+  }
 }
 
-module.exports = UserServices;
+module.exports = UserServices.getInstance();
