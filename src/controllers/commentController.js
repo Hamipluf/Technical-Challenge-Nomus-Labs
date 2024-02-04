@@ -19,7 +19,13 @@ class CommentController {
         parseInt(postId),
         content
       );
-      res.status(201).json(comment);
+      return comment
+        ? res.json(customResponses.responseOk(200, "Comment added.", comment))
+        : res
+            .status(400)
+            .json(
+              customResponses.badResponse(400, "Cant add the comment", comment)
+            );
     } catch (error) {
       res.status(500).json(customResponses.badResponse(500, error.message));
     }
