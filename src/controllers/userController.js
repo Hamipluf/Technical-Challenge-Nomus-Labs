@@ -46,6 +46,16 @@ class UserController {
     }
   }
 
+  async getCurrentUser(req, res) {
+    const currentUser = req.user;
+    if (currentUser.error) {
+      return res.redirect(300, "/login");
+    }
+    res
+      .status(200)
+      .json(customResponses.responseOk(200, "Curren user", currentUser));
+  }
+
   logoutUser(req, res) {
     // Hhere I can delete the cookies or the session
     res.json({ message: "Successful logout." });
