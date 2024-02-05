@@ -44,7 +44,7 @@ Explore the API documentation at `/api-docs` for detailed information about the 
 1. **Backend:**
    - Install dependencies: `npm install`
    - Configure the database in `persistence/config.js`
-   - Place your credentials in the env following env.example
+   - Place your credentials in the env following `env.example`
    - Run the server: `npm start`
 
    
