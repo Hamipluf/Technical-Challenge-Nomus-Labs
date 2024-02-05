@@ -3,6 +3,8 @@ const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 const clientS3 = require("../persistence/aws_s3_config.js").module;
 const userServices = require("../services/userServices.js");
 const customResponses = require("../utils/customResponses.js");
+const dotenv = require("dotenv").config();
+const jwt = require("jsonwebtoken");
 class UserController {
   async registerUser(req, res) {
     try {
@@ -47,13 +49,21 @@ class UserController {
   }
 
   async getCurrentUser(req, res) {
-    const currentUser = req.user;
-    if (currentUser.error) {
-      return res.redirect(300, "/login");
+    const currentUserId = req.userId;
+
+    if (!currentUserId) {
+      return res.redirect('/login')
     }
+
+    const token = jwt.sign({ userId: currentUserId }, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    });
+
     res
       .status(200)
-      .json(customResponses.responseOk(200, "Curren user", currentUser));
+      .json(
+        customResponses.responseOk(200, "Curren user", { currentUserId, token })
+      );
   }
 
   logoutUser(req, res) {
