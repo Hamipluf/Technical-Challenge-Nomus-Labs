@@ -38,10 +38,10 @@ class UserDao {
   }
   async getFolowers(userId) {
     const result = await client.query(
-      `SELECT u.*
-      FROM users u
-      JOIN follows f ON u.id = f.target_user_id
-      WHERE f.user_id = $1`,
+      `SELECT u.id as user_id, u.username as follower_username, u.is_private
+       FROM users u
+       JOIN follows f ON u.id = f.target_user_id
+       WHERE f.user_id = $1`,
       [userId]
     );
     return result.rows;
