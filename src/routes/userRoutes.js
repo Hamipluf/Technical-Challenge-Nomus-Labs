@@ -9,6 +9,7 @@ const router = express.Router();
 router.post("/register", userController.registerUser);
 router.post("/login", userController.loginUser);
 router.get("/current", authMiddleware, userController.getCurrentUser);
+router.get("/followers", authMiddleware, userController.getAllFollowers);
 router.get("/logout", authMiddleware, userController.logoutUser);
 router.get("/search/:username", authMiddleware, userController.searchUsers);
 router.post("/follow/:targetUserId", authMiddleware, userController.followUser);

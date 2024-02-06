@@ -35,7 +35,17 @@ class UserDao {
       [userId, targetUserId]
     );
     return result.rows[0];
-  } 
+  }
+  async getFolowers(userId) {
+    const result = await client.query(
+      `SELECT u.*
+      FROM users u
+      JOIN follows f ON u.id = f.target_user_id
+      WHERE f.user_id = $1`,
+      [userId]
+    );
+    return result.rows;
+  }
   async updatePrivacy(userId, isPrivate) {
     const result = await client.query(
       "UPDATE users SET is_private = $1 WHERE id = $2 RETURNING id, username, is_private",
@@ -50,10 +60,7 @@ class UserDao {
     );
     return result.rows[0];
   }
- 
- 
- 
- 
+
   async updateProfilePicture(userId, profilePictureUrl) {
     const result = await client.query(
       "UPDATE users SET profile_picture_url = $1 WHERE id = $2 RETURNING *",

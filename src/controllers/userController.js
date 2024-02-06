@@ -52,7 +52,7 @@ class UserController {
     const currentUserId = req.userId;
 
     if (!currentUserId) {
-      return res.redirect('/login')
+      return res.redirect("/login");
     }
 
     const token = jwt.sign({ userId: currentUserId }, process.env.JWT_SECRET, {
@@ -113,6 +113,24 @@ class UserController {
     }
   }
 
+  async getAllFollowers(req, res) {
+    try {
+      const { userId } = req;
+      if (!userId) {
+        return res
+          .status(404)
+          .json(
+            customResponses.badResponse(404, "Missing fields to be completed")
+          );
+      }
+      const followers = await userServices.getFollowers(parseInt(userId));
+      return followers
+        ? res.json(customResponses.responseOk(200, "Followers", followers))
+        : res.status(400).json(customResponses.responseOk(400, "Bad request"));
+    } catch (error) {
+      res.status(500).json(customResponses.badResponse(500, error.message));
+    }
+  }
   async unfollowUser(req, res) {
     try {
       const { userId } = req;

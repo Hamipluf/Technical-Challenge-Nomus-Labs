@@ -46,7 +46,10 @@ class UserServices {
     const unfollow = await this.userDao.unfollowUser(userId, targetUserId);
     return unfollow;
   }
-  
+  async getFollowers(userId) {
+    const followers = await this.userDao.getFolowers(userId);
+    return followers;
+  }  
  
   async updatePrivacy(userId, isPrivate) {
     const user = await this.userDao.updatePrivacy(userId, isPrivate);
