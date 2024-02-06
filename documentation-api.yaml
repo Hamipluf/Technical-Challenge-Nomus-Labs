@@ -1,0 +1,741 @@
+openapi: 3.0.3
+info:
+  title: Technical-Challenge-Nomus-Labs 
+  description: |-
+   This project implements a Simple Social Network using Node.js and React.js, with basic functionalities of registration, login, user search, post publishing, follow and unfollow users, and a feed that shows the posts of followed users. In addition, features such as notifications and storage in a PostgreSQL database are included.
+  contact:
+    email: ramirogumma@hotmail.com
+  version: 0.0.1
+
+servers:
+  - url: https://technical-challenge-nomus-labs.onrender.com
+
+tags:
+  - name: users
+    description: Actions users
+  - name: posts
+    description: Access to Post
+  - name: notifications
+    description: Access to notifications
+  - name: comments
+    description: Access to comments
+
+paths:
+  /api/users/login:
+    post:
+      tags:
+        - users
+      summary: Loguin an user
+      description: Returns a user with token authorization.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: Username of user.
+                password:
+                  type: string
+                  description: Password of user.
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Login'          
+        '400':
+          description: Error login
+        '404':
+          description: Missing fields to be completed
+        '500':
+          description: Server Error
+  /api/users/register:
+    post:
+      tags:
+        - users
+      summary: Register a new user
+      description: Create a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: Username of user.
+                password:
+                  type: string
+                  description: Password of user.
+      responses:
+        '201':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Register'          
+        '404':
+          description: Missing fields to be completed
+        '500':
+          description: Server Error
+  /api/users/search/{username}:
+    get:
+      tags:
+        - users
+      summary: Find user by username
+      description: Only receives a username and returns the record of the searched user.
+      parameters:
+        - name: username
+          in: path
+          description: Username to search a user.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchUser'
+        '401':
+          description: Unauthorized access, token not provided or Token not valid.
+        '404':
+          description: Missing fields to be completed
+        '500':
+          description: Server Error
+      security:
+        - bearerAuth: []
+  /api/users/follow/{uid}:
+    post:
+      tags:
+        - users
+      summary: Follow an user
+      description: You can follow a user to be able to share information.
+      parameters:
+        - name: uid
+          in: path
+          description: User ID to follow.
+          required: true
+          schema:
+            type: number
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/Follow'
+        '401':
+          description: Unauthorized access, token not provided or Token not valid.
+        '404':
+          description: Missing fields to be completed
+        '500':
+          description: Server Error
+      security:
+        - bearerAuth: []
+  /api/users/unfollow/{uid}:
+    post:
+      tags:
+        - users
+      summary: Unfollow an user
+      description: "You can Unfollow a user to no longer see the user's information."
+      parameters:
+        - name: uid
+          in: path
+          description: User ID to unfollow.
+          required: true
+          schema:
+            type: number
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/Unfollow'
+        '401':
+          description: Unauthorized access, token not provided or Token not valid.
+        '404':
+          description: Missing fields to be completed
+        '500':
+          description: Server Error
+      security:
+        - bearerAuth: []
+  /api/users/updatePrivacy/{privacity}:
+    post:
+      tags:
+        - users
+      summary: Change your settings privacy
+      description: You can change the privacy settings for the display of your data.
+      parameters:
+        - name: privacity
+          in: path
+          description: Select the new privacy option. Options: "public", "private".
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/PrivacyUpdate'
+        '401':
+          description: Unauthorized access, token not provided or Token not valid.
+        '404':
+          description: Missing fields to be completed
+        '500':
+          description: Server Error
+      security:
+        - bearerAuth: []
+  /api/posts/publish:
+    post:
+      tags:
+        - posts
+      summary: Publish a new post
+      description: You can publish new posts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Publish'
+      responses:
+        '201':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublishResponse'
+        '401':
+          description: Unauthorized access, token not provided or Token not valid.
+        '404':
+          description: Missing fields to be completed
+        '500':
+          description: Server Error
+      security:
+        - bearerAuth: []
+  /api/posts/update/{pid}:
+    put:
+      tags:
+        - posts
+      summary: Update a post
+      description: You can update posts
+      parameters:
+        - name: pid
+          in: path
+          description: Post ID to update.
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePost'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateResponse'
+        '401':
+          description: Unauthorized access, token not provided or Token not valid.
+        '404':
+          description: Missing fields to be completed
+        '500':
+          description: Server Error
+      security:
+        - bearerAuth: []
+  /api/posts/delete/{pid}:
+    delete:
+      tags:
+        - posts
+      summary: Delete a post
+      description: You can delete posts
+      parameters:
+        - name: pid
+          in: path
+          description: Post ID to delete.
+          required: true
+          schema:
+            type: number
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteResponse'
+        '401':
+          description: Unauthorized access, token not provided or Token not valid.
+        '404':
+          description: Missing fields to be completed
+        '500':
+          description: Server Error
+      security:
+        - bearerAuth: []
+  /api/posts/getAll:
+    get:
+      tags:
+        - posts
+      summary: Get all posts
+      description: Returns all posts from followed users.
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetAllPosts'
+        '401':
+          description: Unauthorized access, token not provided or Token not valid.
+        '404':
+          description: Missing fields to be completed
+        '500':
+          description: Server Error
+      security:
+        - bearerAuth: []
+  /api/comments/create:
+    post:
+      tags:
+        - comments
+      summary: Create a new comment
+      description: You can create new comments in a post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateComment'
+      responses:
+        '201':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateCommentResponse'
+        '401':
+          description: Unauthorized access, token not provided or Token not valid.
+        '404':
+          description: Missing fields to be completed
+        '500':
+          description: Server Error
+      security:
+        - bearerAuth: []
+  /api/comments/update/{cid}:
+    put:
+      tags:
+        - comments
+      summary: Update a comment
+      description: You can update comments
+      parameters:
+        - name: cid
+          in: path
+          description: Comment ID to update.
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateComment'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateCommentResponse'
+        '401':
+          description: Unauthorized access, token not provided or Token not valid.
+        '404':
+          description: Missing fields to be completed
+        '500':
+          description: Server Error
+      security:
+        - bearerAuth: []
+  /api/comments/delete/{cid}:
+    delete:
+      tags:
+        - comments
+      summary: Delete a comment
+      description: You can delete comments
+      parameters:
+        - name: cid
+          in: path
+          description: Comment ID to delete.
+          required: true
+          schema:
+            type: number
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteCommentResponse'
+        '401':
+          description: Unauthorized access, token not provided or Token not valid.
+        '404':
+          description: Missing fields to be completed
+        '500':
+          description: Server Error
+      security:
+        - bearerAuth: []
+  /api/notifications/getAll:
+    get:
+      tags:
+        - notifications
+      summary: Get all notifications
+      description: You can get all notifications.
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetAllNotifications'
+        '401':
+          description: Unauthorized access, token not provided or Token not valid.
+        '404':
+          description: Missing fields to be completed
+        '500':
+          description: Server Error
+      security:
+        - bearerAuth: []
+  /api/notifications/markAllAsRead:
+    post:
+      tags:
+        - notifications
+      summary: Mark all notifications as read
+      description: You can mark all notifications as read.
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarkAllAsRead'
+        '401':
+          description: Unauthorized access, token not provided or Token not valid.
+        '404':
+          description: Missing fields to be completed
+        '500':
+          description: Server Error
+      security:
+        - bearerAuth: []
+
+components:
+  schemas:
+    Login:
+      type: object
+      properties:
+        token:
+          type: string
+          description: Authorization token.
+        user:
+          $ref: '#/components/schemas/User'
+      required:
+        - token
+        - user
+    Register:
+      type: object
+      properties:
+        userId:
+          type: integer
+          description: The user ID.
+        username:
+          type: string
+          description: Username of user.
+      required:
+        - userId
+        - username
+    User:
+      type: object
+      properties:
+        userId:
+          type: integer
+          description: The user ID.
+        username:
+          type: string
+          description: Username of user.
+        posts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Post'
+        followers:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+        following:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+      required:
+        - userId
+        - username
+    SearchUser:
+      type: object
+      properties:
+        userId:
+          type: integer
+          description: The user ID.
+        username:
+          type: string
+          description: Username of user.
+      required:
+        - userId
+        - username
+    Follow:
+      type: object
+      properties:
+        userId:
+          type: integer
+          description: The user ID.
+        followersCount:
+          type: integer
+          description: Count of followers.
+      required:
+        - userId
+        - followersCount
+    Unfollow:
+      type: object
+      properties:
+        userId:
+          type: integer
+          description: The user ID.
+        followersCount:
+          type: integer
+          description: Count of followers.
+      required:
+        - userId
+        - followersCount
+    PrivacyUpdate:
+      type: object
+      properties:
+        userId:
+          type: integer
+          description: The user ID.
+        privacyOption:
+          type: string
+          description: New privacy option. Options: "public", "private".
+      required:
+        - userId
+        - privacyOption
+    Publish:
+      type: object
+      properties:
+        userId:
+          type: integer
+          description: The user ID.
+        content:
+          type: string
+          description: Content of the post.
+      required:
+        - userId
+        - content
+    PublishResponse:
+      type: object
+      properties:
+        postId:
+          type: integer
+          description: The post ID.
+        content:
+          type: string
+          description: Content of the post.
+        createdAt:
+          type: string
+          format: date-time
+          description: Date and time when the post was created.
+      required:
+        - postId
+        - content
+        - createdAt
+    UpdatePost:
+      type: object
+      properties:
+        content:
+          type: string
+          description: Updated content of the post.
+      required:
+        - content
+    UpdateResponse:
+      type: object
+      properties:
+        postId:
+          type: integer
+          description: The post ID.
+        content:
+          type: string
+          description: Updated content of the post.
+        updatedAt:
+          type: string
+          format: date-time
+          description: Date and time when the post was updated.
+      required:
+        - postId
+        - content
+        - updatedAt
+    DeleteResponse:
+      type: object
+      properties:
+        postId:
+          type: integer
+          description: The post ID.
+        content:
+          type: string
+          description: Content of the deleted post.
+        deletedAt:
+          type: string
+          format: date-time
+          description: Date and time when the post was deleted.
+      required:
+        - postId
+        - content
+        - deletedAt
+    GetAllPosts:
+      type: object
+      properties:
+        posts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Post'
+    Post:
+      type: object
+      properties:
+        postId:
+          type: integer
+          description: The post ID.
+        userId:
+          type: integer
+          description: The user ID of the post creator.
+        content:
+          type: string
+          description: Content of the post.
+        createdAt:
+          type: string
+          format: date-time
+          description: Date and time when the post was created.
+    CreateComment:
+      type: object
+      properties:
+        userId:
+          type: integer
+          description: The user ID.
+        postId:
+          type: integer
+          description: The post ID.
+        content:
+          type: string
+          description: Content of the comment.
+      required:
+        - userId
+        - postId
+        - content
+    CreateCommentResponse:
+      type: object
+      properties:
+        commentId:
+          type: integer
+          description: The comment ID.
+        content:
+          type: string
+          description: Content of the comment.
+        createdAt:
+          type: string
+          format: date-time
+          description: Date and time when the comment was created.
+      required:
+        - commentId
+        - content
+        - createdAt
+    UpdateComment:
+      type: object
+      properties:
+        content:
+          type: string
+          description: Updated content of the comment.
+      required:
+        - content
+    UpdateCommentResponse:
+      type: object
+      properties:
+        commentId:
+          type: integer
+          description: The comment ID.
+        content:
+          type: string
+          description: Updated content of the comment.
+        updatedAt:
+          type: string
+          format: date-time
+          description: Date and time when the comment was updated.
+      required:
+        - commentId
+        - content
+        - updatedAt
+    DeleteCommentResponse:
+      type: object
+      properties:
+        commentId:
+          type: integer
+          description: The comment ID.
+        content:
+          type: string
+          description: Content of the deleted comment.
+        deletedAt:
+          type: string
+          format: date-time
+          description: Date and time when the comment was deleted.
+      required:
+        - commentId
+        - content
+        - deletedAt
+    GetAllNotifications:
+      type: object
+      properties:
+        notifications:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notification'
+    Notification:
+      type: object
+      properties:
+        notificationId:
+          type: integer
+          description: The notification ID.
+        userId:
+          type: integer
+          description: The user ID to whom the notification belongs.
+        content:
+          type: string
+          description: Content of the notification.
+        createdAt:
+          type: string
+          format: date-time
+          description: Date and time when the notification was created.
+        read:
+          type: boolean
+          description: Indicates whether the notification has been read.
+    MarkAllAsRead:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Indicates whether marking all notifications as read was successful.
+        updatedNotifications:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notification'
