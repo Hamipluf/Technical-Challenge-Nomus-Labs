@@ -14,10 +14,8 @@ class NotificationSerivice {
     );
     return notification;
   }
-  async getUnreadNotifications(userId) {
-    const notifications = await this.notificationDao.getUnreadNotifications(
-      userId
-    );
+  async getNotifications(userId) {
+    const notifications = await this.notificationDao.getNotifications(userId);
     return notifications;
   }
   async markNotificationsAsRead(userId) {

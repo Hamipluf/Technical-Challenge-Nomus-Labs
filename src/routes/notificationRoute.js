@@ -11,7 +11,7 @@ router.post(
 router.get(
   "/getUnreadNotifications",
   authMiddleware,
-  notificationController.getUnreadNotifications
+  notificationController.getNotifications
 );
 router.post(
   "/markNotificationsAsRead",

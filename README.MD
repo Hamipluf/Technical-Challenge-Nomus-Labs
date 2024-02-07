@@ -9,7 +9,7 @@ This project implements a Simple Social Network using Node.js and React.js, feat
 - Node.js
 - React.js
 - PostgreSQL
-- Socket.IO (WebSockets for direct messaging)
+
 
 ## Implemented Features
 

@@ -61,9 +61,7 @@ class UserController {
 
     res
       .status(200)
-      .json(
-        customResponses.responseOk(200, "Curren user", { user, token })
-      );
+      .json(customResponses.responseOk(200, "Curren user", { user, token }));
   }
 
   logoutUser(req, res) {
@@ -83,7 +81,9 @@ class UserController {
       }
       const users = await userServices.searchUsers(username);
       users.error
-        ? res.status(400).json(customResponses.responseOk(400, users.message))
+        ? res
+            .status(200)
+            .json(customResponses.responseOk(200, users.message, []))
         : res.json(customResponses.responseOk(200, "User Founded", users));
     } catch (error) {
       res.status(500).json(customResponses.badResponse(500, error.message));

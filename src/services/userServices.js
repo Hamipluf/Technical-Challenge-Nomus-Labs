@@ -11,7 +11,10 @@ class UserServices {
   async registerUser(username, password) {
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await this.userDao.createUser(username, hashedPassword);
-    return user;
+    const token = jwt.sign({ user: user }, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    });
+    return { user, token };
   }
   async loginUser(username, password) {
     const user = await this.userDao.getUserByUsername(username);

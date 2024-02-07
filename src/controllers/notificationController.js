@@ -38,28 +38,21 @@ class NotificationController {
     }
   }
 
-  async getUnreadNotifications(req, res) {
+  async getNotifications(req, res) {
     try {
       const { userId } = req;
-      const notifications = await notificationService.getUnreadNotifications(
+      const notifications = await notificationService.getNotifications(
         userId
       );
-      return notifications.length < 1
-        ? res.json(
-            customResponses.badResponse(
-              204,
-              `No have notifications the user ${userId}`
-            )
+      return res
+        .status(200)
+        .json(
+          customResponses.responseOk(
+            200,
+            `The user ${userId} have ${notifications.length} notifications`,
+            notifications
           )
-        : res
-            .status(200)
-            .json(
-              customResponses.responseOk(
-                200,
-                `The user ${userId} have ${notifications.length} notifications`,
-                notifications
-              )
-            );
+        );
     } catch (error) {
       res.status(500).json(customResponses.badResponse(500, error.message));
     }
