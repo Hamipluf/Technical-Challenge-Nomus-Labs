@@ -51,7 +51,7 @@ class UserController {
   async getCurrentUser(req, res) {
     const { user } = req;
 
-    if (!user.id) {
+    if (!user) {
       return res.redirect("/login");
     }
 
