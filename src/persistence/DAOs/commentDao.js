@@ -10,7 +10,11 @@ class CommentDao {
   }
   async getPostComments(postId) {
     const result = await client.query(
-      "SELECT * FROM comments WHERE post_id = $1 ORDER BY created_at ASC",
+      `SELECT c.*, u.username AS commenter_username, u.is_private AS commenter_is_private
+      FROM comments c
+      JOIN users u ON c.user_id = u.id
+      WHERE c.post_id = $1
+      ORDER BY c.created_at ASC`,
       [postId]
     );
     return result.rows;
