@@ -49,20 +49,20 @@ class UserController {
   }
 
   async getCurrentUser(req, res) {
-    const currentUserId = req.userId;
+    const { user } = req;
 
-    if (!currentUserId) {
+    if (!user.id) {
       return res.redirect("/login");
     }
 
-    const token = jwt.sign({ userId: currentUserId }, process.env.JWT_SECRET, {
+    const token = jwt.sign({ user: user }, process.env.JWT_SECRET, {
       expiresIn: "1h",
     });
 
     res
       .status(200)
       .json(
-        customResponses.responseOk(200, "Curren user", { currentUserId, token })
+        customResponses.responseOk(200, "Curren user", { user, token })
       );
   }
 

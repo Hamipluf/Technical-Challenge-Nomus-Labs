@@ -25,7 +25,13 @@ class UserServices {
       return { error: true, message: "Incorrect password." };
     }
 
-    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
+    const insensitiveUser = {
+      id: user.id,
+      username: user.username,
+      is_private: user.is_private,
+    };
+
+    const token = jwt.sign({ user: insensitiveUser }, process.env.JWT_SECRET, {
       expiresIn: "1h",
     });
 
@@ -49,8 +55,8 @@ class UserServices {
   async getFollowers(userId) {
     const followers = await this.userDao.getFolowers(userId);
     return followers;
-  }  
- 
+  }
+
   async updatePrivacy(userId, isPrivate) {
     const user = await this.userDao.updatePrivacy(userId, isPrivate);
     return user;
@@ -59,8 +65,7 @@ class UserServices {
     const isPrivate = await this.userDao.getUserPrivacy(userId);
     return isPrivate;
   }
- 
-  
+
   async updateProfilePicture(userId, profilePictureUrl) {
     const user = await this.userDao.updateProfilePicture(
       userId,
@@ -68,7 +73,7 @@ class UserServices {
     );
     return user;
   }
-  
+
   static getInstance() {
     if (!this.instance) {
       this.instance = new UserServices();

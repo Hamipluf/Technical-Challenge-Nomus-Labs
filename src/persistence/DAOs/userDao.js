@@ -10,7 +10,7 @@ class UserDao {
   }
   async getUserByUsername(username) {
     const result = await client.query(
-      "SELECT id, username, password FROM users WHERE username = $1",
+      "SELECT id, username, password, is_private FROM users WHERE username = $1",
       [username]
     );
     return result.rows[0];
