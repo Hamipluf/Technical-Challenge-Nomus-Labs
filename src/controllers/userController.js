@@ -17,13 +17,26 @@ class UserController {
           );
       }
       const user = await userServices.registerUser(username, password);
-      res
-        .status(201)
-        .json(
-          customResponses.responseOk(200, "User successfully registered", user)
-        );
+      return user.error
+        ? res
+            .status(400)
+            .json(
+              customResponses.badResponse(
+                400,
+                "A user with this username already exists."
+              )
+            )
+        : res
+            .status(201)
+            .json(
+              customResponses.responseOk(
+                200,
+                "User successfully registered",
+                user
+              )
+            );
     } catch (error) {
-      console.log(error);
+      console.log("Error", error);
       res.status(500).json(customResponses.badResponse(500, error.message));
     }
   }
@@ -40,7 +53,7 @@ class UserController {
       }
       const user = await userServices.loginUser(username, password);
       return user.error
-        ? res.status(400).json(customResponses.responseOk(400, user.message))
+        ? res.status(400).json(customResponses.badResponse(400, user.message))
         : res.json(customResponses.responseOk(200, "Logged", user));
     } catch (error) {
       console.log(error);
